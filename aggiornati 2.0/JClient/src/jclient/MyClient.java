@@ -101,6 +101,8 @@ public class MyClient implements Runnable{
         hostname= KW_C;
         interf.disconnesso();
         interf.reloadClients();
+        try{Thread.sleep(200); //aspetta che i thread concorrenti finiscano di utilizzare le risorse
+        }catch(InterruptedException ex){}
     }
     
     /**
