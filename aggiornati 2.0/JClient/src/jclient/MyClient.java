@@ -129,7 +129,9 @@ public class MyClient implements Runnable{
      * Salva i vari dati su file 
      */
     private void saveFile(){
-        File file= new File("serverFiles/dataServer-" + address + "-" + port);
+        File file= new File("serverFiles");
+        file.mkdir();
+        file= new File("serverFiles/dataServer-" + address + "-" + port);
         try{
             file.createNewFile();
             fOut= new PrintStream(file);
@@ -333,8 +335,8 @@ public class MyClient implements Runnable{
     }
 
     /**
+     * Ritorna il client nel formato: name, address, state.
      * @param hostname
-     * Ritorna il client nel formato: name, address, state
      * @return 
      * -String[] se il client esiste<br>
      * -null altrimenti
@@ -344,6 +346,16 @@ public class MyClient implements Runnable{
             if(client[0].equals(hostname)) return client;
         }
         return null;
+    }
+    
+    /**
+     * Ritorna il client nel formato: name, address, state.
+     * @param index
+     * @return se il client esiste<br>
+     * -null altrimenti
+     */
+    public String[] getClient(int index){
+        return clients.get(index);
     }
 
     /**

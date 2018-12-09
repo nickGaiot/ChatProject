@@ -44,7 +44,7 @@ public class MainInterface extends javax.swing.JFrame {
         selectButton.setEnabled(false);
         logoutMenuItem.setEnabled(false);
         disconnesso();
-        logLabel.setText("NESSUNA CONNESSIONE SELEZIONATA");
+        logLabel.setText("NO ACTIVE CONNECTIONS ");
         this.setLocationRelativeTo(null);
         this.setVisible(true);
     }
@@ -65,7 +65,7 @@ public class MainInterface extends javax.swing.JFrame {
                     @Override
                     public void run(){
                         logoutMenuItem.doClick();
-                        logLabel.setText("In connessione... ");
+                        logLabel.setText("Connecting... ");
                         client.setAddress(address);
                         client.setPort(port);
                         client.connettiti();
@@ -90,7 +90,6 @@ public class MainInterface extends javax.swing.JFrame {
         messageTextField.setEditable(true);
         passwordMenuItem.setEnabled(true);
         logoutMenuItem.setEnabled(true);
-        passwordMenuItem.setText("Imposta password per " + client.getAddress() + " ");
         logLabel.setText(client.getAddress() + " " + client.getPort() + ": CONNECTED ");
     }
     
@@ -103,7 +102,6 @@ public class MainInterface extends javax.swing.JFrame {
         passwordMenuItem.setEnabled(false);
         setSelectedChat(MyClient.KW_G);
         messageTextField.setText("");
-        passwordMenuItem.setText("Imposta password per... ");
         logLabel.setText(client.getAddress() + " " + client.getPort() + ": OFFLINE ");
     }
     
@@ -136,6 +134,7 @@ public class MainInterface extends javax.swing.JFrame {
     public String requestHostname(boolean show){
         hostname= null;
         getHostnameFrame.setVisible(true);
+        nameLogLabel.setText("*Server Busy ");
         nameLogLabel.setVisible(show);
         while(getHostnameFrame.isVisible()){
             try{Thread.sleep(100);
@@ -169,7 +168,7 @@ public class MainInterface extends javax.swing.JFrame {
      */
     public void addMessage(String[] message){
         String[] wClient;
-        String writer, recipient, addrWriter= "", time, text;
+        String writer, recipient, addrWriter, time, text;
         writer= message[0];
         recipient= message[1];
         time= message[2];
@@ -177,7 +176,8 @@ public class MainInterface extends javax.swing.JFrame {
         if(isChatMessage(writer, recipient)){
             wClient= client.getClientByName(writer);
             if(addrCheckBox.isSelected() && wClient != null) addrWriter= wClient[1];
-            if(destCheckBox.isSelected()) recipient= "[" + recipient + "] ";
+            else addrWriter= "";
+            if(destCheckBox.isSelected()) recipient= "[To " + recipient + "] ";
             else recipient= "";
             time= parseTime(Long.parseLong(time));
             chatTextArea.insert(time + recipient + writer + addrWriter + ": " + text + "\n", chatTextArea.getDocument().getLength());
@@ -198,7 +198,7 @@ public class MainInterface extends javax.swing.JFrame {
             addMessage(message);
         }
     }
-
+    
     /**
      * Ritorna il tempo formattato in stringa:
      * se l'ultimo messaggio è dello stesso giorno ritorna l'ora e i minuti,
@@ -229,7 +229,7 @@ public class MainInterface extends javax.swing.JFrame {
         for(String[] client : clients){
             hostname= client[0];
             state= client[2];
-            if(state.equals(MyClient.S_Ban)) state= "(bannato)";
+            if(state.equals(MyClient.S_Ban)) state= "(banned)";
             else if(state.equals(MyClient.S_Dis)) state= "(offline)";
             else state= "";
             model.addElement(hostname + " " + state);
@@ -245,7 +245,7 @@ public class MainInterface extends javax.swing.JFrame {
         else if(chat.equals(MyClient.KW_G)) chatLabel.setText("Global Chat");
         else if(chat.equals(MyClient.KW_L)) chatLabel.setText("Local Chat");
         else chatLabel.setText("Private Chat (" + chat + ")");
-        messageLabel.setText("Send Message (destinazione " + chat + ")");
+        messageLabel.setText("Send Message (TO " + chat + ")");
         reloadMessages();
     }
     
@@ -351,7 +351,7 @@ public class MainInterface extends javax.swing.JFrame {
         });
 
         jLabel4.setFont(new java.awt.Font("Tahoma", 0, 24)); // NOI18N
-        jLabel4.setText("Attributi Connessione");
+        jLabel4.setText("New Connection");
 
         jLabel5.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         jLabel5.setText("Address:");
@@ -369,7 +369,7 @@ public class MainInterface extends javax.swing.JFrame {
         });
 
         jLabel6.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        jLabel6.setText("Porta:");
+        jLabel6.setText("Port:");
 
         portTextField.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         portTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
@@ -384,7 +384,7 @@ public class MainInterface extends javax.swing.JFrame {
         });
 
         aggiungiButton.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        aggiungiButton.setText("Aggiungi");
+        aggiungiButton.setText("Add");
         aggiungiButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 aggiungiButtonActionPerformed(evt);
@@ -392,7 +392,7 @@ public class MainInterface extends javax.swing.JFrame {
         });
 
         annullaConnButton.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        annullaConnButton.setText("annulla");
+        annullaConnButton.setText("cancel");
         annullaConnButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 annullaConnButtonActionPerformed(evt);
@@ -419,7 +419,7 @@ public class MainInterface extends javax.swing.JFrame {
                                 .addGap(0, 0, Short.MAX_VALUE))))
                     .addGroup(addConnectionFrameLayout.createSequentialGroup()
                         .addComponent(jLabel4)
-                        .addGap(0, 132, Short.MAX_VALUE))
+                        .addGap(0, 184, Short.MAX_VALUE))
                     .addGroup(addConnectionFrameLayout.createSequentialGroup()
                         .addComponent(annullaConnButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -458,13 +458,13 @@ public class MainInterface extends javax.swing.JFrame {
         });
 
         requestNameLabel.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
-        requestNameLabel.setText("Titolo");
+        requestNameLabel.setText("Title");
 
         jLabel8.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         jLabel8.setText("Hostname:");
 
         nameTextField.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        nameTextField.setText("Nome");
+        nameTextField.setText("Name");
         nameTextField.setAlignmentX(1.0F);
         nameTextField.setAutoscrolls(false);
         nameTextField.addCaretListener(new javax.swing.event.CaretListener() {
@@ -484,19 +484,19 @@ public class MainInterface extends javax.swing.JFrame {
         });
 
         confermaNameButton.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        confermaNameButton.setText("Conferma");
+        confermaNameButton.setText("Confirm");
         confermaNameButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 confermaNameButtonActionPerformed(evt);
             }
         });
 
-        nameLogLabel.setFont(new java.awt.Font("Tahoma", 2, 14)); // NOI18N
+        nameLogLabel.setFont(new java.awt.Font("Tahoma", 2, 16)); // NOI18N
         nameLogLabel.setForeground(java.awt.Color.red);
-        nameLogLabel.setText("*Nome non valido ");
+        nameLogLabel.setText("*Invalid Name ");
 
         annullaNameButton.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        annullaNameButton.setText("annulla");
+        annullaNameButton.setText("cancel");
         annullaNameButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 annullaNameButtonActionPerformed(evt);
@@ -523,7 +523,7 @@ public class MainInterface extends javax.swing.JFrame {
                                 .addComponent(nameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(nameLogLabel)))
-                        .addGap(0, 34, Short.MAX_VALUE)))
+                        .addGap(0, 41, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         getHostnameFrameLayout.setVerticalGroup(
@@ -560,7 +560,7 @@ public class MainInterface extends javax.swing.JFrame {
         jLabel7.setText("Password:");
 
         confermaPassButton.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        confermaPassButton.setText("Conferma");
+        confermaPassButton.setText("Confirm");
         confermaPassButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 confermaPassButtonActionPerformed(evt);
@@ -568,7 +568,7 @@ public class MainInterface extends javax.swing.JFrame {
         });
 
         annullaPassButton.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        annullaPassButton.setText("annulla");
+        annullaPassButton.setText("cancel");
         annullaPassButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 annullaPassButtonActionPerformed(evt);
@@ -576,11 +576,11 @@ public class MainInterface extends javax.swing.JFrame {
         });
 
         requestPassLabel.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
-        requestPassLabel.setText("Titolo");
+        requestPassLabel.setText("Title");
 
-        passLogLabel.setFont(new java.awt.Font("Tahoma", 2, 14)); // NOI18N
+        passLogLabel.setFont(new java.awt.Font("Tahoma", 2, 16)); // NOI18N
         passLogLabel.setForeground(java.awt.Color.red);
-        passLogLabel.setText("*Password errata ");
+        passLogLabel.setText("*Invalid Password  ");
 
         PassPasswordField.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         PassPasswordField.setAlignmentX(1.0F);
@@ -606,7 +606,7 @@ public class MainInterface extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(passLogLabel))
                             .addComponent(requestPassLabel))
-                        .addGap(0, 43, Short.MAX_VALUE))
+                        .addGap(0, 14, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, getPasswordFrameLayout.createSequentialGroup()
                         .addComponent(annullaPassButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -737,6 +737,7 @@ public class MainInterface extends javax.swing.JFrame {
         jLabel3.setText("Clients");
 
         clientsList.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        clientsList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         clientsList.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 clientsListKeyPressed(evt);
@@ -784,12 +785,12 @@ public class MainInterface extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        impostazioniMenu.setText("Impostazioni");
+        impostazioniMenu.setText("Connections");
 
-        connessioniMenu.setText("Seleziona Connessione");
+        connessioniMenu.setText("Set up Connection");
 
         aggiungiMenuItem.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        aggiungiMenuItem.setText("+ aggiungi");
+        aggiungiMenuItem.setText("+ Add");
         aggiungiMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 aggiungiMenuItemActionPerformed(evt);
@@ -800,7 +801,7 @@ public class MainInterface extends javax.swing.JFrame {
         impostazioniMenu.add(connessioniMenu);
 
         passwordMenuItem.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        passwordMenuItem.setText("Imposta password per...");
+        passwordMenuItem.setText("Set up password for this connection");
         passwordMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 passwordMenuItemActionPerformed(evt);
@@ -819,10 +820,10 @@ public class MainInterface extends javax.swing.JFrame {
 
         jMenuBar1.add(impostazioniMenu);
 
-        shermataMenu.setText("Schermata");
+        shermataMenu.setText("Preferences");
 
         addrCheckBox.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        addrCheckBox.setText("Visualizza l'ADDRESS");
+        addrCheckBox.setText("Show Address");
         addrCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addrCheckBoxActionPerformed(evt);
@@ -832,7 +833,7 @@ public class MainInterface extends javax.swing.JFrame {
 
         destCheckBox.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         destCheckBox.setSelected(true);
-        destCheckBox.setText("Visualizza il [DESTINATARIO]");
+        destCheckBox.setText("Show [ Recipient ]");
         destCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 destCheckBoxActionPerformed(evt);
@@ -841,7 +842,7 @@ public class MainInterface extends javax.swing.JFrame {
         shermataMenu.add(destCheckBox);
 
         allChatsCheckBox.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        allChatsCheckBox.setText("Visualizza TUTTE le CHATS");
+        allChatsCheckBox.setText("Show ALL Chats");
         allChatsCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 allChatsCheckBoxActionPerformed(evt);
@@ -850,7 +851,7 @@ public class MainInterface extends javax.swing.JFrame {
         shermataMenu.add(allChatsCheckBox);
 
         lockCheckBox.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        lockCheckBox.setText("Visualizza sempre l'ultimo messaggio");
+        lockCheckBox.setText("Lock to last Message");
         lockCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 lockCheckBoxActionPerformed(evt);
@@ -1014,7 +1015,7 @@ public class MainInterface extends javax.swing.JFrame {
         reloadMessages();
         reloadClients();
         logoutMenuItem.setEnabled(false);
-        logLabel.setText("NESSUNA CONNESSIONE SELEZIONATA");
+        logLabel.setText("NO ACTIVE CONNECTIONS ");
     }//GEN-LAST:event_logoutMenuItemActionPerformed
     /**
      * Ricarica i messaggi.
@@ -1031,6 +1032,7 @@ public class MainInterface extends javax.swing.JFrame {
             confermaNameButton.setEnabled(true);
             nameLogLabel.setVisible(false);
         }else{
+            nameLogLabel.setText("*Invalid Name ");
             confermaNameButton.setEnabled(false);
             nameLogLabel.setVisible(true);
         }
@@ -1058,12 +1060,14 @@ public class MainInterface extends javax.swing.JFrame {
      * Chiama la funzione setSelectedChat come parametro la chat selezionata
      */
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
-        String recipient= clientsList.getSelectedValue().split(" ")[0];
-        if(chat.equals(recipient)){
-            recipient= MyClient.KW_G;
+        int index= clientsList.getSelectedIndex();
+        String[] client= this.client.getClient(index);
+        String hostname= client[0];
+        if(chat.equals(hostname)){
+            hostname= MyClient.KW_G;
             clientsList.clearSelection();
         }
-        setSelectedChat(recipient);
+        setSelectedChat(hostname);
     }//GEN-LAST:event_selectButtonActionPerformed
     /**
      * Abilita/Disabilita il bottone selectButton,
@@ -1102,8 +1106,8 @@ public class MainInterface extends javax.swing.JFrame {
     private void getHostnameFrameComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_getHostnameFrameComponentShown
         this.setEnabled(false);
         getHostnameFrame.setLocationRelativeTo(this);
-        nameTextField.setText("Nome");
-        requestNameLabel.setText("Hostname richiesta (" + client.getAddress() + " " + client.getPort() + ")");
+        nameTextField.setText("Name");
+        requestNameLabel.setText("Hostname required (" + client.getAddress() + " " + client.getPort() + ")");
     }//GEN-LAST:event_getHostnameFrameComponentShown
     /**
      * Setta gli attributi a default
@@ -1112,7 +1116,7 @@ public class MainInterface extends javax.swing.JFrame {
         this.setEnabled(false);
         getPasswordFrame.setLocationRelativeTo(this);
         PassPasswordField.setText("");
-        requestPassLabel.setText("Password richiesta (" + client.getAddress() + " " + client.getPort() + ")");
+        requestPassLabel.setText("Password required (" + client.getAddress() + " " + client.getPort() + ")");
     }//GEN-LAST:event_getPasswordFrameComponentShown
     /**
      * Al premere di invio effettua un click al bottone sendButton
@@ -1138,8 +1142,7 @@ public class MainInterface extends javax.swing.JFrame {
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         client.disconnettiti();
     }//GEN-LAST:event_formWindowClosing
-/*
-     */    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel ClientPanel;
     private javax.swing.JPasswordField PassPasswordField;
     private javax.swing.JFrame addConnectionFrame;

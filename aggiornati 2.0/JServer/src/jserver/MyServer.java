@@ -126,9 +126,12 @@ public class MyServer implements Runnable{
     public void saveFiles(){
         File file;
         PrintStream fOut;
-        
-        file= new File("globalChat/globalChat");
+        file= new File("globalChat");
+        file.mkdir();
+        file= new File("clientFiles");
+        file.mkdir();
         try{
+            file= new File("globalChat/globalChat");
             file.createNewFile();
             fOut= new PrintStream(file);
             for(String[] message: messaggi) fOut.println(cryptMessage(message));
@@ -136,8 +139,8 @@ public class MyServer implements Runnable{
         }catch(IOException ex){}
             
         for(Connection conn : connessioni){
-            file= new File("clientFiles/dataClient-" + conn.address + "-" + conn.hostname);
             try{
+                file= new File("clientFiles/dataClient-" + conn.address + "-" + conn.hostname);
                 file.createNewFile();
                 fOut= new PrintStream(file);
                 fOut.println(cryptClient(parseClient(conn)));
@@ -282,7 +285,7 @@ public class MyServer implements Runnable{
     }
     
     /**
-     * tutte le connessioni vengono inviati come client alla connessione.
+     * Tutte le connessioni vengono inviati come client alla connessione.
      */
     private void sendAllClientTo(Connection connessione){
         for(Connection conn : connessioni) connessione.send(cryptClient(parseClient(conn)));
@@ -323,8 +326,8 @@ public class MyServer implements Runnable{
     }
     
     /**
-     * @param hostname
      * Ritorna il client nel formato: name, address, state.
+     * @param hostname
      * @return 
      * -String[] se il client esiste<br>
      * -null altrimenti
