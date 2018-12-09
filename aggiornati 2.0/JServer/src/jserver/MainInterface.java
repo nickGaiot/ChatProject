@@ -45,14 +45,15 @@ public class MainInterface extends javax.swing.JFrame{
      */
     public void addMessage(String[] message){
         String[] wClient;
-        String writer, recipient= "", addrWriter= "", time, text;
+        String writer, recipient, addrWriter, time, text;
         writer= message[0];
         recipient= message[1];
         time= message[2];
         text= message[3];
         wClient= server.getClientByName(writer);
-        if(addrCheckBox.isSelected() && wClient != null) addrWriter= wClient[1];
-        if(destCheckBox.isSelected()) recipient= "[" + recipient + "] ";
+        if(addrCheckBox.isSelected() && addrCheckBox1.isSelected() && wClient != null) addrWriter= wClient[1];
+        else addrWriter= "";
+        if(destCheckBox.isSelected()) recipient= "[To " + recipient + "] ";
         else recipient= "";
         time= parseTime(Long.parseLong(time));
         chatTextArea.insert(time + recipient + writer + addrWriter + ": " + text + "\n", chatTextArea.getDocument().getLength());
@@ -60,7 +61,7 @@ public class MainInterface extends javax.swing.JFrame{
     
     /**
      * Ricarica i messaggi,
-     * utilizzato quando le impostazioni della finestra cambiano
+     * utilizzato quando le impostazioni della finestra cambiano.
      */
     public void reloadMessages(){
         String[][] messaggi= server.getMessages();
@@ -74,7 +75,7 @@ public class MainInterface extends javax.swing.JFrame{
     /**
      * Ritorna il tempo formattato in stringa:
      * se l'ultimo messaggio è dello stesso giorno ritorna l'ora e i minuti,
-     * altrimenti ritorna anche il giorno
+     * altrimenti ritorna anche il giorno.
      * @param time tempo in millisecondi
      * @return -string
      */
@@ -91,7 +92,7 @@ public class MainInterface extends javax.swing.JFrame{
     }
     
     /**
-     * Ricarica la lista dei clients 17873  86404620
+     * Ricarica la lista dei clients.
      */
     public void reloadClients(){
         DefaultListModel model= new DefaultListModel();
@@ -100,7 +101,7 @@ public class MainInterface extends javax.swing.JFrame{
         for(String[] client : clients){
             hostname= client[0];
             state= client[2];
-            if(state.equals(MyServer.S_Ban)) state= "(bannato)";
+            if(state.equals(MyServer.S_Ban)) state= "(banned)";
             else if(state.equals(MyServer.S_Dis)) state= "(offline)";
             else state= "";
             model.addElement(hostname + " " + state);
@@ -129,12 +130,14 @@ public class MainInterface extends javax.swing.JFrame{
         chatTextArea = new javax.swing.JTextArea();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
-        autoSaveCheckBox = new javax.swing.JCheckBoxMenuItem();
-        saveMenuItem = new javax.swing.JMenuItem();
         closeMenuItem = new javax.swing.JMenuItem();
+        saveMenuItem = new javax.swing.JMenuItem();
+        jSeparator1 = new javax.swing.JPopupMenu.Separator();
+        autoSaveCheckBox = new javax.swing.JCheckBoxMenuItem();
         impostazioniMenu = new javax.swing.JMenu();
         addrCheckBox = new javax.swing.JCheckBoxMenuItem();
         schermataMenu = new javax.swing.JMenu();
+        addrCheckBox1 = new javax.swing.JCheckBoxMenuItem();
         destCheckBox = new javax.swing.JCheckBoxMenuItem();
         lockCheckBox = new javax.swing.JCheckBoxMenuItem();
 
@@ -293,28 +296,8 @@ public class MainInterface extends javax.swing.JFrame{
 
         jMenu1.setText("File");
 
-        autoSaveCheckBox.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        autoSaveCheckBox.setSelected(true);
-        autoSaveCheckBox.setText("Salva Chiudendo");
-        autoSaveCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                autoSaveCheckBoxActionPerformed(evt);
-            }
-        });
-        jMenu1.add(autoSaveCheckBox);
-
-        saveMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
-        saveMenuItem.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        saveMenuItem.setText("Salva");
-        saveMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveMenuItemActionPerformed(evt);
-            }
-        });
-        jMenu1.add(saveMenuItem);
-
         closeMenuItem.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        closeMenuItem.setText("Close");
+        closeMenuItem.setText("Close Server");
         closeMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 closeMenuItemActionPerformed(evt);
@@ -322,13 +305,34 @@ public class MainInterface extends javax.swing.JFrame{
         });
         jMenu1.add(closeMenuItem);
 
+        saveMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
+        saveMenuItem.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        saveMenuItem.setText("Save All Data");
+        saveMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveMenuItemActionPerformed(evt);
+            }
+        });
+        jMenu1.add(saveMenuItem);
+        jMenu1.add(jSeparator1);
+
+        autoSaveCheckBox.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        autoSaveCheckBox.setSelected(true);
+        autoSaveCheckBox.setText("Automatically Save at Closing");
+        autoSaveCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                autoSaveCheckBoxActionPerformed(evt);
+            }
+        });
+        jMenu1.add(autoSaveCheckBox);
+
         jMenuBar1.add(jMenu1);
 
-        impostazioniMenu.setText("Impostazioni");
+        impostazioniMenu.setText("Options");
 
         addrCheckBox.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         addrCheckBox.setSelected(true);
-        addrCheckBox.setText("Mostra/Nascondi l'ADDRESS a TUTTI gli host");
+        addrCheckBox.setText("Addresses Visible to Clients");
         addrCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addrCheckBoxActionPerformed(evt);
@@ -338,11 +342,20 @@ public class MainInterface extends javax.swing.JFrame{
 
         jMenuBar1.add(impostazioniMenu);
 
-        schermataMenu.setText("Schermata");
+        schermataMenu.setText("Preference");
+
+        addrCheckBox1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        addrCheckBox1.setText("Show Address");
+        addrCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addrCheckBox1ActionPerformed(evt);
+            }
+        });
+        schermataMenu.add(addrCheckBox1);
 
         destCheckBox.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         destCheckBox.setSelected(true);
-        destCheckBox.setText("Visualizza il DESTINATARIO");
+        destCheckBox.setText("Show [ Recipient ]");
         destCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 destCheckBoxActionPerformed(evt);
@@ -351,7 +364,7 @@ public class MainInterface extends javax.swing.JFrame{
         schermataMenu.add(destCheckBox);
 
         lockCheckBox.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        lockCheckBox.setText("Visualizza sempre l'ultimo messaggio");
+        lockCheckBox.setText("Lock to last Message");
         lockCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 lockCheckBoxActionPerformed(evt);
@@ -377,7 +390,7 @@ public class MainInterface extends javax.swing.JFrame{
         pack();
     }// </editor-fold>//GEN-END:initComponents
     /**
-     * Banna il client selezionato
+     * Banna il client selezionato.
      */
     private void banButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_banButtonActionPerformed
         int index= clientsList.getSelectedIndex();
@@ -386,20 +399,20 @@ public class MainInterface extends javax.swing.JFrame{
     /**
      * Abilita/Disabilita il bottone banButton,
      * se è selezionato un client lo abilita,
-     * altrimenti lo disabilita
+     * altrimenti lo disabilita.
      */
     private void clientsListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_clientsListValueChanged
         if(clientsList.isSelectionEmpty()) banButton.setEnabled(false);
         else banButton.setEnabled(true);
     }//GEN-LAST:event_clientsListValueChanged
     /**
-     * Al premere di invio effettua un click al bottone sendButton
+     * Al premere di invio effettua un click al bottone sendButton.
      */
     private void messageTextFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_messageTextFieldKeyPressed
         if(evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) sendButton.doClick();
     }//GEN-LAST:event_messageTextFieldKeyPressed
     /**
-     * Invia il messaggio
+     * Invia il messaggio.
      */
     private void sendButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendButtonActionPerformed
         String message= messageTextField.getText();
@@ -407,21 +420,21 @@ public class MainInterface extends javax.swing.JFrame{
         messageTextField.setText("");
     }//GEN-LAST:event_sendButtonActionPerformed
     /**
-     * Rinvia i clients aggiornati ai clients e ricarica i messaggi
+     * Rinvia i clients aggiornati ai clients e ricarica i messaggi.
      */
     private void addrCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addrCheckBoxActionPerformed
         server.setShowAddress(addrCheckBox.isSelected());
         reloadMessages();
     }//GEN-LAST:event_addrCheckBoxActionPerformed
     /**
-     * Ricarica i messaggi
+     * Ricarica i messaggi.
      */
     private void destCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_destCheckBoxActionPerformed
         reloadMessages();
     }//GEN-LAST:event_destCheckBoxActionPerformed
     /**
      * Se la checkBox viene selezionata, alla modifica dei messaggi viene visualizzato quello in fondo,
-     * altrimenti alla modifica non fa niente
+     * altrimenti alla modifica non fa niente.
      */
     private void lockCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lockCheckBoxActionPerformed
         DefaultCaret caret = (DefaultCaret)chatTextArea.getCaret();
@@ -429,45 +442,52 @@ public class MainInterface extends javax.swing.JFrame{
         else caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
     }//GEN-LAST:event_lockCheckBoxActionPerformed
     /**
-     * Al premere un tasto dà il focus a messageTextFild
+     * Al premere un tasto dà il focus a messageTextFild.
      */
     private void chatTextAreaKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_chatTextAreaKeyPressed
         messageTextField.requestFocus();
     }//GEN-LAST:event_chatTextAreaKeyPressed
     /**
-     * Al premere un tasto dà il focus a messageTextFild
+     * Al premere un tasto dà il focus a messageTextFild.
      */
     private void clientsListKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_clientsListKeyPressed
         messageTextField.requestFocus();
     }//GEN-LAST:event_clientsListKeyPressed
     /**
-     * Chiude salvando nei file le connessioni
+     * Chiude salvando nei file le connessioni.
      */
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         server.closeServer();
     }//GEN-LAST:event_formWindowClosing
     /**
-     * Setta l'autosave e salva
+     * Setta l'autosave e salva.
      */
     private void autoSaveCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoSaveCheckBoxActionPerformed
         server.setAutoSave(autoSaveCheckBox.isSelected());
     }//GEN-LAST:event_autoSaveCheckBoxActionPerformed
     /**
-     * Salva
+     * Salva.
      */
     private void saveMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveMenuItemActionPerformed
         server.saveFiles();
     }//GEN-LAST:event_saveMenuItemActionPerformed
 
     /**
-     * Chiude l'interfaccia grafica
+     * Chiude l'interfaccia grafica.
      */
     private void closeMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeMenuItemActionPerformed
         server.closeServer();
         System.exit(0);
     }//GEN-LAST:event_closeMenuItemActionPerformed
+    /**
+     * ricarica i messaggi.
+     */
+    private void addrCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addrCheckBox1ActionPerformed
+        reloadMessages();
+    }//GEN-LAST:event_addrCheckBox1ActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBoxMenuItem addrCheckBox;
+    private javax.swing.JCheckBoxMenuItem addrCheckBox1;
     private javax.swing.JCheckBoxMenuItem autoSaveCheckBox;
     private javax.swing.JButton banButton;
     private javax.swing.JPanel chatPanel;
@@ -484,6 +504,7 @@ public class MainInterface extends javax.swing.JFrame{
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JCheckBoxMenuItem lockCheckBox;
     private javax.swing.JLabel logLabel;
     private javax.swing.JPanel mainPanel;
