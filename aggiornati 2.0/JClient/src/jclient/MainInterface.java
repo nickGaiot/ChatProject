@@ -66,8 +66,6 @@ public class MainInterface extends javax.swing.JFrame {
                     public void run(){
                         logoutMenuItem.doClick();
                         logLabel.setText("In connessione... ");
-                        try{Thread.sleep(100); //aspetta che i thread concorrenti finiscano di chiudere la connessione prima che questo thread lo apra
-                        }catch(InterruptedException ex){}
                         client.setAddress(address);
                         client.setPort(port);
                         client.connettiti();
@@ -1140,9 +1138,7 @@ public class MainInterface extends javax.swing.JFrame {
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         client.disconnettiti();
     }//GEN-LAST:event_formWindowClosing
-
-    /**
-     * Salva la connessione e setta il salvataggio automatico
+/*
      */    // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel ClientPanel;
     private javax.swing.JPasswordField PassPasswordField;

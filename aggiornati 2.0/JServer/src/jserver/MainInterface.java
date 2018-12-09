@@ -84,7 +84,6 @@ public class MainInterface extends javax.swing.JFrame{
         long delayDay= day - ((lastTime + hour) % day)/*, delayHour= hour - lastTime % hour*/;
         Calendar date= Calendar.getInstance();
         date.setTimeInMillis(time);
-        System.out.println((lastTime) + "  " + (lastTime % day));
         if(time > lastTime + delayDay) text+= "   " + date.get(date.DATE) + "/" + (date.get(date.MONTH) + 1) + "/" + date.get(date.YEAR) + "\n";
         /*if(time > lastTime + delayHour) */text+= date.get(date.HOUR_OF_DAY) + ":" + date.get(date.MINUTE) + " ";
         if(time > lastTime) lastTime= time;
