@@ -41,9 +41,9 @@ public class MainInterface extends javax.swing.JFrame {
         addConnectionFrame.setSize(addConnectionFrame.getPreferredSize());
         getHostnameFrame.setSize(getHostnameFrame.getPreferredSize());
         getPasswordFrame.setSize(getPasswordFrame.getPreferredSize());
+        disconnesso();
         selectButton.setEnabled(false);
         logoutMenuItem.setEnabled(false);
-        disconnesso();
         logLabel.setText("NO ACTIVE CONNECTIONS ");
         this.setLocationRelativeTo(null);
         this.setVisible(true);
@@ -64,14 +64,13 @@ public class MainInterface extends javax.swing.JFrame {
                 new Thread(){
                     @Override
                     public void run(){
-                        logoutMenuItem.doClick();
+                        logout();
                         logLabel.setText("Connecting... ");
                         client.setAddress(address);
                         client.setPort(port);
                         client.connettiti();
-                        logoutMenuItem.setEnabled(true);
-                        if(!client.isOpen()){
-                            logLabel.setText(address + " " + port + ": OFFLINE ");
+                        if(!client.isConnectionOpen()){
+                            disconnesso();
                         }
                     }
                 }.start();
@@ -81,7 +80,8 @@ public class MainInterface extends javax.swing.JFrame {
     }
     
     /**
-     * Setta gli attributi in modalità connesso
+     * Setta gli attributi in modalità connesso,
+     * aggiorna le label e i messaggi.
      */
     public void connesso(){
         hostname= client.getHostname();
@@ -94,15 +94,34 @@ public class MainInterface extends javax.swing.JFrame {
     }
     
     /**
-     * Setta gli attributi in modalità disconnesso
+     * Setta gli attributi in modalità disconnesso,
+     * aggiorna le label, i messaggi e i clients.
      */
     public void disconnesso(){
+        connesso();
+        reloadClients();
+        if(client.getHostname() == null){
+            sendButton.setEnabled(false);
+            messageTextField.setEditable(false);
+        }
+        passwordMenuItem.setEnabled(false);
+        logLabel.setText(client.getAddress() + " " + client.getPort() + ": OFFLINE ");
+    }
+    
+    /**
+     * Disconnette il client dal server,
+     * setta gli attributi in modalità logout,
+     * aggiorna le label, i messaggi e i clients.
+     */
+    private void logout(){
+        client.disconnettiti();
+        client.clearAll();
+        reloadMessages();
+        reloadClients();
         sendButton.setEnabled(false);
         messageTextField.setEditable(false);
-        passwordMenuItem.setEnabled(false);
-        setSelectedChat(MyClient.KW_G);
-        messageTextField.setText("");
-        logLabel.setText(client.getAddress() + " " + client.getPort() + ": OFFLINE ");
+        logoutMenuItem.setEnabled(false);
+        logLabel.setText("NO ACTIVE CONNECTIONS ");
     }
     
     /**
@@ -168,19 +187,22 @@ public class MainInterface extends javax.swing.JFrame {
      */
     public void addMessage(String[] message){
         String[] wClient;
-        String writer, recipient, addrWriter, time, text;
-        writer= message[0];
-        recipient= message[1];
-        time= message[2];
+        String writer, recipient, addrWriter, text, time, state;
+        writer= message[1];
+        recipient= message[2];
         text= message[3];
+        time= message[4];
+        state= message[5];
         if(isChatMessage(writer, recipient)){
             wClient= client.getClientByName(writer);
             if(addrCheckBox.isSelected() && wClient != null) addrWriter= wClient[1];
             else addrWriter= "";
             if(destCheckBox.isSelected()) recipient= "[To " + recipient + "] ";
             else recipient= "";
+            if(state.equals(MyClient.S_Send)) state= " sending... ";
+            else state= "";
             time= parseTime(Long.parseLong(time));
-            chatTextArea.insert(time + recipient + writer + addrWriter + ": " + text + "\n", chatTextArea.getDocument().getLength());
+            chatTextArea.insert(time + state + recipient + writer + addrWriter + ": " + text + "\n", chatTextArea.getDocument().getLength());
         }
     }
     
@@ -337,6 +359,7 @@ public class MainInterface extends javax.swing.JFrame {
         addrCheckBox = new javax.swing.JCheckBoxMenuItem();
         destCheckBox = new javax.swing.JCheckBoxMenuItem();
         allChatsCheckBox = new javax.swing.JCheckBoxMenuItem();
+        jSeparator1 = new javax.swing.JPopupMenu.Separator();
         lockCheckBox = new javax.swing.JCheckBoxMenuItem();
 
         addConnectionFrame.setTitle("Impostazioni");
@@ -650,7 +673,10 @@ public class MainInterface extends javax.swing.JFrame {
         chatTextArea.setEditable(false);
         chatTextArea.setColumns(20);
         chatTextArea.setFont(new java.awt.Font("Arial", 0, 16)); // NOI18N
+        chatTextArea.setLineWrap(true);
         chatTextArea.setRows(5);
+        chatTextArea.setWrapStyleWord(true);
+        chatTextArea.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         chatTextArea.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 chatTextAreaKeyPressed(evt);
@@ -849,6 +875,7 @@ public class MainInterface extends javax.swing.JFrame {
             }
         });
         shermataMenu.add(allChatsCheckBox);
+        shermataMenu.add(jSeparator1);
 
         lockCheckBox.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         lockCheckBox.setText("Lock to last Message");
@@ -1005,17 +1032,10 @@ public class MainInterface extends javax.swing.JFrame {
         getHostnameFrame.setVisible(false);
     }//GEN-LAST:event_annullaNameButtonActionPerformed
     /**
-     * Disconnette il client dal server e deseleziona la connessione.
+     * Effettua il logout
      */
     private void logoutMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logoutMenuItemActionPerformed
-        client.disconnettiti();
-        client.setAddress(null);
-        client.setPort(0);
-        client.loadFile();
-        reloadMessages();
-        reloadClients();
-        logoutMenuItem.setEnabled(false);
-        logLabel.setText("NO ACTIVE CONNECTIONS ");
+        logout();
     }//GEN-LAST:event_logoutMenuItemActionPerformed
     /**
      * Ricarica i messaggi.
@@ -1174,6 +1194,7 @@ public class MainInterface extends javax.swing.JFrame {
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JCheckBoxMenuItem lockCheckBox;
     private javax.swing.JLabel logLabel;
     private javax.swing.JMenuItem logoutMenuItem;

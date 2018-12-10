@@ -16,16 +16,20 @@ import java.util.ArrayList;
  */
 public class MyServer implements Runnable{
     
-    //key Words
+    //key Words: parole base
     public static final String KW_S= "SERVER", KW_C="CLIENT", KW_L= "local", KW_G= "global";
+    //Accepted: messaggio di accettazione della autentificazione
+    public static final String A_Conn= "JServer:accepted_connection";
+    //Closed: messaggi di chiusura
+    public static final String C_Client= "JClient:closed_connection:", C_Server= "JServer:closed_connection:";
     //Messaggi: dopo il prefisso seguono i vari campi
-    public static final String M_M= "message:" /*writer, recipient, time, text*/, M_Cl= "client:"/*name, address, state*/, M_Pass= "password:", M_Host= "hostname:";
+    public static final String M_M= "message:" /*id, writer, recipient, text, time, state*/, M_Cl= "client:"/*name, address, state*/, M_Pass= "password:", M_Host= "hostname:";
+    //States vari stati che può assumere un messaggio
+    public static final String S_Send= "sending", S_For= "forwarding", S_Rec= "recived";
     //States vari stati che può assumere un client
     public static final String S_Conn= "connected", S_Dis= "disconnected", S_Ban= "banned";
     //Requests inviati dal Server al Client
     public static final String R_Host= "request_hostname", R_Pass= "request_password", R_Acc= "request_accepted"/*, R_Deny= "request_denied"*/;
-    //Closed: messaggi di chiusura
-    public static final String C_Client= "JClient:closed_connection:", C_Server= "JServer:closed_connection:";
     //Separator: carattere che l'utente non può inserire: utilizzato per separare i campi dei messaggi
     public static final String Sep= String.valueOf((char)0);
     
@@ -51,7 +55,7 @@ public class MyServer implements Runnable{
         autoSave= true;
         interf= new MainInterface(this);
         loadFiles();
-        sendMessageAll(KW_G, "IL SERVER E' IN ATTESA SULLA PORTA '4000'");
+        sendMessageAll(KW_G + messaggi.size(), KW_G, "IL SERVER E' IN ATTESA SULLA PORTA '4000'");
         new Thread(this).start();
     }
 
@@ -66,7 +70,7 @@ public class MyServer implements Runnable{
                 String hostname= client.getInetAddress().getHostAddress();
                 Connection conn= getConnectionByAddress(hostname);
                 if(conn != null) if(conn.hostname != null) hostname= conn.hostname;
-                sendMessageAll(KW_G, "Connessione accettata da: " + hostname);
+                sendMessageAll(KW_G + messaggi.size(), KW_G, "Connessione accettata da: " + hostname);
                 new Thread(new Connection(client)).start();
             } catch(IOException ex){}
         }
@@ -159,7 +163,7 @@ public class MyServer implements Runnable{
         Connection conn= getConnectionByHostname(hostname);
         if(!conn.bannato && conn.client.isClosed()){
             conn.bannato= true;
-            sendMessageAll(KW_G, hostname.toUpperCase() + " E' STATO ORA BANNATO");
+            sendMessageAll(KW_G + messaggi.size(), KW_G, hostname.toUpperCase() + " E' STATO ORA BANNATO");
             sendClientAll(conn);
             interf.reloadClients();
         }else{
@@ -201,9 +205,9 @@ public class MyServer implements Runnable{
     /**
      * In base ai parametri passati ritorna il messaggio.
      */
-    private String[] parseMessage(String writer, String recipient, String text){
+    private String[] parseMessage(String id, String writer, String recipient, String text, String state){
         long time= System.currentTimeMillis();
-        return new String[]{writer, recipient, String.valueOf(time), text};
+        return new String[]{id, writer, recipient, text, String.valueOf(time), state};
     }
     
     /**
@@ -218,7 +222,7 @@ public class MyServer implements Runnable{
      * Ritorna la stringa cifrata del messaggio.
      */
     private String cryptMessage(String[] message){
-        return M_M + message[0] + Sep + message[1] + Sep + message[2] + Sep + message[3];
+        return M_M + message[0] + Sep + message[1] + Sep + message[2] + Sep + message[3] + Sep + message[4] + Sep + message[5];
     }
     
     /**
@@ -260,8 +264,8 @@ public class MyServer implements Runnable{
      * @param writer il mittente
      * @param text il testo
      */
-    public void sendMessageAll(String writer, String text){
-        String[] message= parseMessage(writer, KW_G, text);
+    public void sendMessageAll(String id, String writer, String text){
+        String[] message= parseMessage(id, writer, KW_G, text, S_Rec);
         String crypted= cryptMessage(message);
         sendAll(crypted);
         messaggi.add(message);
@@ -271,10 +275,10 @@ public class MyServer implements Runnable{
     /**
      * Invia il messaggio ai client interessati.
      */
-    private void sendPrivateMessage(String writer, String recipient, String text){
-        String crypted= cryptMessage(parseMessage(writer, recipient, text));
-        getConnectionByHostname(writer).send(crypted);
+    private void sendPrivateMessage(String id, String writer, String recipient, String text){
+        String crypted= cryptMessage(parseMessage(id, writer, recipient, text, S_Rec));
         getConnectionByHostname(recipient).send(crypted);
+        getConnectionByHostname(writer).send(crypted);
     }
     
     /**
@@ -292,12 +296,12 @@ public class MyServer implements Runnable{
     }
     
     /**
-     * Ritorna tutti i messaggi nel formato: writer, recipient, time, text.
+     * Ritorna tutti i messaggi nel formato: id, writer, recipient, text, time, state.
      * @return -String[][] i messaggi, es:<br>
      *  {<br>
-     *      {writer, recipient, time, text},<br>
-     *      {writer, recipient, time, text},<br>
-     *      {writer, recipient, time, text}<br>
+     *      {id, writer, recipient, text, time, state},<br>
+     *      {id, writer, recipient, text, time, state},<br>
+     *      {id, writer, recipient, text, time, state}<br>
      *  };
      */
     public String[][] getMessages() {
@@ -356,7 +360,7 @@ public class MyServer implements Runnable{
      */
     public void closeServer(){
         try{
-            sendMessageAll(KW_G, "IL SERVER E' STATO CHIUSO");
+            sendMessageAll(KW_G + messaggi.size(), KW_G, "IL SERVER E' STATO CHIUSO");
             for(Connection conn : connessioni) conn.closeAll("SERVER CHIUSO");
             if(autoSave) saveFiles();
             Server.close();
@@ -417,13 +421,14 @@ public class MyServer implements Runnable{
             if(hostname == null) requestHostname();
             requestPassword();
             send(M_Host + hostname);
+            send(A_Conn);
             connessioni.add(this);
             if(conn != null){
                 conn.closeAll("CONNESSO DA UNA NUOVA CONNESSIONE");
                 connessioni.remove(conn);
                 for(String crypted : conn.offlineMessages) send(crypted);
-                sendMessageAll(KW_G, hostname.toUpperCase() + " SI E' RICONNESSO");
-            }else sendMessageAll(KW_G, "BENVENUTO " + hostname.toUpperCase() + "!");
+                sendMessageAll(KW_G + messaggi.size(), KW_G, hostname.toUpperCase() + " SI E' RICONNESSO");
+            }else sendMessageAll(KW_G + messaggi.size(), KW_G, "BENVENUTO " + hostname.toUpperCase() + "!");
             sendAllClientTo(this);
             sendClientAll(this);
             interf.reloadClients();
@@ -441,7 +446,6 @@ public class MyServer implements Runnable{
                     if(stringa.startsWith(M_M)) addMessage(stringa);
                     else if(stringa.startsWith(M_Pass)) setPassword(stringa.substring(M_Pass.length()));
                 }while(!stringa.startsWith(C_Client));
-            }catch(IOException ex){
             }catch(Exception ex){}
             closeAll("E' USCITO");
         }
@@ -454,10 +458,11 @@ public class MyServer implements Runnable{
          */
         private void addMessage(String crypted){
             String[] message= parseMessage(crypted);
-            String recipient= message[1];
-            if(recipient.equals(KW_G)) sendMessageAll(message[0], message[3]);
-            else{
-                sendPrivateMessage(message[0], recipient, message[3]);
+            String id= message[0], writer= message[1], recipient= message[2], text= message[3];
+            if(recipient.equals(KW_G)){
+                sendMessageAll(id, writer, text);
+            }else{
+                sendPrivateMessage(id, writer, recipient, text);
             }
         }
         
@@ -528,10 +533,10 @@ public class MyServer implements Runnable{
             if(!client.isClosed()){
                 String hostname= address;
                 if(this.hostname != null) hostname= this.hostname;
-                sendMessageAll(KW_G, hostname.toUpperCase() + " SI E' DISCONNESSO: " + messaggio.toLowerCase());
+                sendMessageAll(KW_G + messaggi.size(), KW_G, hostname.toUpperCase() + " SI E' DISCONNESSO: " + messaggio.toLowerCase());
                 
                 try{
-                    send(cryptMessage(parseMessage(KW_G, hostname, messaggio)));
+                    send(cryptMessage(parseMessage(KW_G + messaggi.size(), KW_G, hostname, messaggio, S_Rec)));
                     out.print(C_Server + messaggio);
                     client.close();
                     out.close();

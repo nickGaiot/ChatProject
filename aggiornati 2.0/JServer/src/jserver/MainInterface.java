@@ -46,10 +46,10 @@ public class MainInterface extends javax.swing.JFrame{
     public void addMessage(String[] message){
         String[] wClient;
         String writer, recipient, addrWriter, time, text;
-        writer= message[0];
-        recipient= message[1];
-        time= message[2];
+        writer= message[1];
+        recipient= message[2];
         text= message[3];
+        time= message[4];
         wClient= server.getClientByName(writer);
         if(addrCheckBox.isSelected() && addrCheckBox1.isSelected() && wClient != null) addrWriter= wClient[1];
         else addrWriter= "";
@@ -139,6 +139,7 @@ public class MainInterface extends javax.swing.JFrame{
         schermataMenu = new javax.swing.JMenu();
         addrCheckBox1 = new javax.swing.JCheckBoxMenuItem();
         destCheckBox = new javax.swing.JCheckBoxMenuItem();
+        jSeparator2 = new javax.swing.JPopupMenu.Separator();
         lockCheckBox = new javax.swing.JCheckBoxMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -231,7 +232,9 @@ public class MainInterface extends javax.swing.JFrame{
         chatTextArea.setEditable(false);
         chatTextArea.setColumns(20);
         chatTextArea.setFont(new java.awt.Font("Arial", 0, 16)); // NOI18N
+        chatTextArea.setLineWrap(true);
         chatTextArea.setRows(5);
+        chatTextArea.setWrapStyleWord(true);
         chatTextArea.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 chatTextAreaKeyPressed(evt);
@@ -362,6 +365,7 @@ public class MainInterface extends javax.swing.JFrame{
             }
         });
         schermataMenu.add(destCheckBox);
+        schermataMenu.add(jSeparator2);
 
         lockCheckBox.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         lockCheckBox.setText("Lock to last Message");
@@ -416,7 +420,7 @@ public class MainInterface extends javax.swing.JFrame{
      */
     private void sendButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendButtonActionPerformed
         String message= messageTextField.getText();
-        if(message.trim().length() > 0) server.sendMessageAll(MyServer.KW_S, message);
+        if(message.trim().length() > 0) server.sendMessageAll(MyServer.KW_S + server.getMessages().length, MyServer.KW_S, message);
         messageTextField.setText("");
     }//GEN-LAST:event_sendButtonActionPerformed
     /**
@@ -505,6 +509,7 @@ public class MainInterface extends javax.swing.JFrame{
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JPopupMenu.Separator jSeparator1;
+    private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JCheckBoxMenuItem lockCheckBox;
     private javax.swing.JLabel logLabel;
     private javax.swing.JPanel mainPanel;
