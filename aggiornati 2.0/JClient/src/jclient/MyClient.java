@@ -15,18 +15,20 @@ import java.util.ArrayList;
  */
 public class MyClient implements Runnable{
     
-    //key Words
+    //key Words: parole base
     public static final String KW_S= "SERVER", KW_C="CLIENT", KW_L= "local", KW_G= "global";
+    //Accepted: messaggio di accettazione della autentificazione
+    public static final String A_Conn= "JServer:accepted_connection";
+    //Closed: messaggi di chiusura
+    public static final String C_Client= "JClient:closed_connection:", C_Server= "JServer:closed_connection:";
     //Messaggi: dopo il prefisso seguono i vari campi
-    public static final String M_M= "message:" /*writer, recipient, time, text*/, M_Cl= "client:"/*name, address, state*/, M_Pass= "password:", M_Host= "hostname:";
-    /*//States vari stati che può assumere un messaggio
-    public static final String S_Send= "sended", S_Rec= "recived", S_Disp= "displayed";*/
+    public static final String M_M= "message:" /*id, writer, recipient, text, time, state*/, M_Cl= "client:"/*name, address, state*/, M_Pass= "password:", M_Host= "hostname:";
+    //States vari stati che può assumere un messaggio
+    public static final String S_Send= "sending", S_For= "forwarding", S_Rec= "recived";
     //States vari stati che può assumere un client
     public static final String S_Conn= "connected", S_Dis= "disconnected", S_Ban= "banned";
     //Requests inviati dal Server al Client
     public static final String R_Host= "request_hostname", R_Pass= "request_password", R_Acc= "request_accepted"/*, R_Deny= "request_denied"*/;
-    //Closed: messaggi di chiusura
-    public static final String C_Client= "JClient:closed_connection:", C_Server= "JServer:closed_connection:";
     //Separator: carattere che l'utente non può inserire: utilizzato per separare i campi dei messaggi
     public static final String Sep= String.valueOf((char)0);
     
@@ -50,24 +52,27 @@ public class MyClient implements Runnable{
     public MyClient(){
         messaggi= new ArrayList<>();
         clients= new ArrayList<>();
+        hostname= null;
         address= null;
         port= 0;
         interf= new MainInterface(this);
     }
     
     /**
-     * Rimane in ascolto per il server
+     * Rinvia gli 'offlineMessagges',
+     * Rimane in ascolto per il server,
+     * Si disconnette.
      */
     @Override
     public void run(){
         String stringa;
+        sendOfflineMssages();
         try{
             do{
                 stringa= in.readLine();
                 decryptString(stringa);
             }while(!stringa.startsWith(C_Server));
         }catch(IOException ex){}catch(Exception ex){}
-        addMessage(cryptMessage(parseMessage(KW_G, KW_L, "TI SEI DISCONNESSO")));
         disconnettiti();
     }
     
@@ -89,19 +94,21 @@ public class MyClient implements Runnable{
      */
     public void disconnettiti(){
         for(String[] client : clients) if(client[2].equals(S_Conn)) client[2]= S_Dis;
-        if(socket != null){
-            try{
+        try{
+            if(hostname != null){
                 saveFile();
-                send(C_Client);
-                socket.close();
-                out.close();
-                in.close();
-            }catch(IOException ex){}
-        }
-        hostname= KW_C;
+            }
+            if(isConnectionOpen()){
+                updateMessage(cryptMessage(parseMessage(KW_G, KW_L, "TI SEI DISCONNESSO", S_Rec)));
+            }
+            send(C_Client);
+            socket.close();
+            out.close();
+            in.close();
+        }catch(Exception ex){}
+        
         interf.disconnesso();
-        interf.reloadClients();
-        try{Thread.sleep(200); //aspetta che i thread concorrenti finiscano di utilizzare le risorse
+        try{ Thread.sleep(200); //aspetta che i thread concorrenti finiscano di utilizzare le risorse
         }catch(InterruptedException ex){}
     }
     
@@ -112,8 +119,7 @@ public class MyClient implements Runnable{
     public void loadFile(){
         File file= new File("serverFiles/dataServer-" + address + "-" + port);
         String stringa;
-        messaggi.clear();
-        clients.clear();
+        clearAll();
         try{
             fIn= new BufferedReader(new FileReader(file));
             while(fIn.ready()){
@@ -135,6 +141,7 @@ public class MyClient implements Runnable{
         try{
             file.createNewFile();
             fOut= new PrintStream(file);
+            fOut.println(M_Host + hostname);
             for(String[] client : clients){
                 fOut.println(cryptClient(client));
             }
@@ -145,12 +152,20 @@ public class MyClient implements Runnable{
         }catch(FileNotFoundException ex){}catch(IOException ex){}
     }
     
+    public void clearAll(){
+        messaggi.clear();
+        clients.clear();
+        hostname= null;
+    }
+    
     /**
-     * In base ai parametri passati ritorna il messaggio
+     * In base ai parametri passati ritorna il messaggio,
+     * nota che l'id viene creato così:<br>
+     * <i>hostname + messaggi.size()</i>.
      */
-    private String[] parseMessage(String writer, String recipient, String text){
+    private String[] parseMessage(String writer, String recipient, String text, String state){
         long time= System.currentTimeMillis();
-        return new String[]{writer, recipient, String.valueOf(time), text};
+        return new String[]{hostname + messaggi.size(), writer, recipient, text, String.valueOf(time), state};
     }
     
     /**
@@ -165,7 +180,7 @@ public class MyClient implements Runnable{
      * Ritorna la stringa cifrata del messaggio
      */
     private String cryptMessage(String[] message){
-        return M_M + message[0] + Sep + message[1] + Sep + message[2] + Sep + message[3];
+        return M_M + message[0] + Sep + message[1] + Sep + message[2] + Sep + message[3] + Sep + message[4] + Sep + message[5];
     }
     
     /**
@@ -184,11 +199,12 @@ public class MyClient implements Runnable{
     }
     
     private void decryptString(String crypted) throws IOException{
-        if(crypted.startsWith(M_M)) addMessage(crypted);
+        if(crypted.startsWith(M_M)) updateMessage(crypted);
         else if(crypted.startsWith(M_Cl)) updateClient(crypted);
         else if(crypted.startsWith(M_Host)) updateHostname(crypted);
         else if(crypted.startsWith(R_Host)) requestHostname();
         else if(crypted.startsWith(R_Pass)) requestPassword();
+        else if(crypted.startsWith(A_Conn)) interf.connesso();
     }
     
     /**
@@ -224,19 +240,17 @@ public class MyClient implements Runnable{
     }
     
     /**
-     * Imposta l'hostname e aggiorna l'interfaccia.
-     * Questa funzione viene chiamata dal server quando ha validato la connessione
-     * @param hostname 
+     * Setta l'hostname.
+     * @param hostname deve essere cifrato
      */
-    private void updateHostname(String hostname){
-        this.hostname= hostname.substring(M_Host.length());
-        interf.connesso();
+    private void updateHostname(String crypted){
+        hostname= crypted.substring(M_Host.length());
     }
     
     /**
      * Se il client è nuovo lo aggiunge,
-     * altrimenti aggiorna quello vecchio,
-     * aggiorna l'interfaccia
+     * altrimenti aggiorna quello vecchio e aggiorna i messaggi dell'interfaccia,
+     * aggiorna i clients dell'interfaccia.
      * @param crypted 
      */
     private void updateClient(String crypted){
@@ -244,37 +258,46 @@ public class MyClient implements Runnable{
         client= parseClient(crypted);
         other= getClientByName(client[0]);
         if(other == null) clients.add(client);
-        else clients.set(clients.indexOf(other), client);
+        else{
+            clients.set(clients.indexOf(other), client);
+            interf.reloadMessages();
+        }
         interf.reloadClients();
-        interf.reloadMessages();
     }
     
     /**
-     * Aggiunge il messaggio e aggiorna l'interfaccia
+     * Se il mesaggio è nuovo lo aggiunge,
+     * altrimenti aggiorna quello vecchio e aggiorna i messaggi dell'interfaccia.
      * @param crypted 
      */
-    private void addMessage(String crypted){
-        String[] message= parseMessage(crypted);
-        messaggi.add(message);
-        interf.addMessage(message);
-    }
-    
-    /**
-     * Invia la stringa cifrata se la connessione è aperta.
-     * Se è chiusa salva la stringa nell'array offlineMessages
-     * @param message 
-     */
-    private void send(String message){
-        if(isOpen()){
-            out.println(message);
-            out.flush();
-        }else{
-            //da fare
+    private void updateMessage(String crypted){
+        String[] message, other;
+        message= parseMessage(crypted);
+        other= getMesasgeById(message[0]);
+        if(other == null){
+            messaggi.add(message);
+            interf.addMessage(message);
+        }
+        else{
+            messaggi.remove(other);
+            messaggi.add(message);
+            interf.reloadMessages();
         }
     }
     
     /**
-     * Manda l'hostame
+     * Invia la stringa cifrata se la connessione è aperta.
+     * @param message 
+     */
+    private void send(String message){
+        if(isConnectionOpen()){
+            out.println(message);
+            out.flush();
+        }
+    }
+    
+    /**
+     * Manda l'hostame.
      * @param hostname 
      */
     public void sendHostname(String hostname){
@@ -290,23 +313,46 @@ public class MyClient implements Runnable{
     }
     
     /**
-     * Invia il messaggio
+     * Invia il messaggio se la connessione è aperta,
+     * e anche se la connessione non è aperta aggiunge il messaggio tra i messaggi in stato 'spedito'.
      * @param writer
      * @param recipient
      * @param text 
      */
     public void sendMessage(String writer, String recipient, String text){
-        String crypted= cryptMessage(parseMessage(writer, recipient, text));
+        String crypted= cryptMessage(parseMessage(writer, recipient, text, S_Send));
+        updateMessage(crypted);
         send(crypted);
     }
     
     /**
-     * Ritorna tutti i messaggi nel formato: writer, recipient, time, text
+     * Rinvia tutti i messaggi che sono in stato sending.
+     */
+    private void sendOfflineMssages(){
+        String[] message;
+        int index= 0;
+        boolean a= true;
+        while(a){
+            if(index >= messaggi.size()) a= false;
+            else{
+                message= messaggi.get(index);
+                if(message[5].equals(S_Send)) a= false;
+                else index++;
+            }
+        }
+        for(int i= index; i < messaggi.size(); i++){
+            message= messaggi.get(i);
+            send(cryptMessage(message));
+        }
+    }
+    
+    /**
+     * Ritorna tutti i messaggi nel formato: id, writer, recipient, text, time, state.
      * @return -String[][] i messaggi, es:<br>
      *  {<br>
-     *      {writer, recipient, time, text},<br>
-     *      {writer, recipient, time, text},<br>
-     *      {writer, recipient, time, text}<br>
+     *      {id, writer, recipient, text, time, state},<br>
+     *      {id, writer, recipient, text, time, state},<br>
+     *      {id, writer, recipient, text, time, state}<br>
      *  };
      */
     public String[][] getMessaggi() {
@@ -318,7 +364,21 @@ public class MyClient implements Runnable{
     }
     
     /**
-     * Ritorna tutti i client nel formato: name, address, state
+     * Ritorna il messaggio nel formato: id, writer, recipient, text, time, state.
+     * @param id
+     * @return 
+     * -String[] se il messaggio esiste<br>
+     * -null altrimenti
+     */
+    public String[] getMesasgeById(String id){
+        for(String[] message : messaggi){
+            if(message[0].equals(id)) return message;
+        }
+        return null;
+    }
+    
+    /**
+     * Ritorna tutti i client nel formato: name, address, state.
      * @return -String[][] i clients, es:<br>
      *  {<br>
      *      {name, address, state},<br>
@@ -362,9 +422,10 @@ public class MyClient implements Runnable{
      * @return -true se il soket non è chiuso<br>
      * -false altrimenti
      */
-    public boolean isOpen(){
+    public boolean isConnectionOpen(){
         if(socket == null) return false;
-        return !socket.isClosed();
+        if(socket.isClosed()) return false;
+        return true;
     }
 
     public String getAddress() {
