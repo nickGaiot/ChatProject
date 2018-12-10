@@ -81,11 +81,10 @@ public class MainInterface extends javax.swing.JFrame {
     
     /**
      * Setta gli attributi in modalità connesso,
-     * aggiorna le label e i messaggi.
+     * aggiorna le label.
      */
     public void connesso(){
         hostname= client.getHostname();
-        setSelectedChat(MyClient.KW_G);
         sendButton.setEnabled(true);
         messageTextField.setEditable(true);
         passwordMenuItem.setEnabled(true);
@@ -95,7 +94,7 @@ public class MainInterface extends javax.swing.JFrame {
     
     /**
      * Setta gli attributi in modalità disconnesso,
-     * aggiorna le label, i messaggi e i clients.
+     * aggiorna le label e i clients.
      */
     public void disconnesso(){
         connesso();
@@ -116,7 +115,7 @@ public class MainInterface extends javax.swing.JFrame {
     private void logout(){
         client.disconnettiti();
         client.clearAll();
-        reloadMessages();
+        setSelectedChat(MyClient.KW_G);
         reloadClients();
         sendButton.setEnabled(false);
         messageTextField.setEditable(false);
@@ -199,10 +198,10 @@ public class MainInterface extends javax.swing.JFrame {
             else addrWriter= "";
             if(destCheckBox.isSelected()) recipient= "[To " + recipient + "] ";
             else recipient= "";
-            if(state.equals(MyClient.S_Send)) state= " sending... ";
+            if(state.equals(MyClient.S_Send)) state= "sending... ";
             else state= "";
             time= parseTime(Long.parseLong(time));
-            chatTextArea.insert(time + state + recipient + writer + addrWriter + ": " + text + "\n", chatTextArea.getDocument().getLength());
+            chatTextArea.append(time + state + recipient + writer + addrWriter + ": " + text + "\n");
         }
     }
     
@@ -267,7 +266,7 @@ public class MainInterface extends javax.swing.JFrame {
         else if(chat.equals(MyClient.KW_G)) chatLabel.setText("Global Chat");
         else if(chat.equals(MyClient.KW_L)) chatLabel.setText("Local Chat");
         else chatLabel.setText("Private Chat (" + chat + ")");
-        messageLabel.setText("Send Message (TO " + chat + ")");
+        messageLabel.setText("Send Message (To " + chat + ")");
         reloadMessages();
     }
     

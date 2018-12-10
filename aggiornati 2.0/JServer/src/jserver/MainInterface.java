@@ -56,7 +56,7 @@ public class MainInterface extends javax.swing.JFrame{
         if(destCheckBox.isSelected()) recipient= "[To " + recipient + "] ";
         else recipient= "";
         time= parseTime(Long.parseLong(time));
-        chatTextArea.insert(time + recipient + writer + addrWriter + ": " + text + "\n", chatTextArea.getDocument().getLength());
+        chatTextArea.append(time + recipient + writer + addrWriter + ": " + text + "\n");
     }
     
     /**
